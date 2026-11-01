@@ -4,7 +4,8 @@
 
 <p align="center">
   <img alt="Status: beta" src="https://img.shields.io/badge/status-beta-d29922?style=for-the-badge">
-  <img alt="Version 2.0.1" src="https://img.shields.io/badge/version-2.0.1-2f81f7?style=for-the-badge">
+  <a href="../../releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/ks-rdz-07/junk-cleaner-2.0?include_prereleases&style=for-the-badge&color=2f81f7&label=release"></a>
+  <a href="../../releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/ks-rdz-07/junk-cleaner-2.0/total?style=for-the-badge&color=38bdf8&label=downloads"></a>
   <img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-3fb950?style=for-the-badge">
   <img alt="Windows | Linux" src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux-8b5cf6?style=for-the-badge">
   <br>
