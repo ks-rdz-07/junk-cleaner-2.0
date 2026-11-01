@@ -140,9 +140,11 @@ python marketing/video.py                                          # videos  -> 
 [Apache License 2.0](LICENSE), which includes an express patent grant from every contributor. See [NOTICE](NOTICE).
 
 ## Contributors
-Thanks to everyone who has helped build Junk Cleaner. This list updates automatically when a contributor's first
-pull request is merged.
+Thanks to everyone who helps build Junk Cleaner. New contributors show up here automatically after their first
+merged pull request. Want to join them? Start with [CONTRIBUTING.md](CONTRIBUTING.md).
 
-<a href="../../graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=ks-rdz-07/junk-cleaner-2.0&max=100&columns=12" alt="Contributors">
-</a>
+<p align="center">
+  <a href="../../graphs/contributors">
+    <img src="https://raw.githubusercontent.com/ks-rdz-07/junk-cleaner-2.0/contributors/contributors.svg" alt="Contributors">
+  </a>
+</p>

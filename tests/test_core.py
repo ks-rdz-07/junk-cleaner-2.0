@@ -175,5 +175,20 @@ class QuarantineAndHistory(unittest.TestCase):
         self.assertEqual(decode_av_state(0x061110), (True, False))
 
 
+class ContributorsImage(unittest.TestCase):
+    def test_svg_layout_and_escaping(self):
+        import importlib.util
+        path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".github", "scripts",
+                            "contributors_svg.py")
+        spec = importlib.util.spec_from_file_location("contributors_svg", path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        out = mod.svg([{"login": f"user{i}", "avatar": b"png"} for i in range(9)] + [{"login": "<x>", "avatar": b""}])
+        self.assertIn('width="736"', out)        # 8 per row
+        self.assertEqual(out.count("<image"), 10)
+        self.assertIn("&lt;x&gt;", out)          # usernames are escaped
+        self.assertNotIn("<x>", out)
+
+
 if __name__ == "__main__":
     unittest.main()
