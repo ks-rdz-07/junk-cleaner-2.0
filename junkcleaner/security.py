@@ -235,3 +235,48 @@ def defender_history():
     return [{"time": r["Time"], "threat": r["Threat"] or "Unknown", "severity": sev.get(r["Sev"], "—"),
              "status": THREAT_STATUS.get(r["Status"], str(r["Status"])), "files": r["Files"]}
             for r in json.loads(out or "[]")]
+
+
+# ------------------------------------------------ live scanner activity
+def scanner_activity(image="msert.exe"):
+    """(running, bytes_read, read_operations) summed over processes named `image`, or None off Windows.
+    msert gives no progress of its own; its disk reads show the user that the scan is working."""
+    if not WIN:
+        return None
+    import ctypes
+    from ctypes import wintypes
+    k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+    class Entry(ctypes.Structure):
+        _fields_ = [("dwSize", wintypes.DWORD), ("cntUsage", wintypes.DWORD), ("pid", wintypes.DWORD),
+                    ("heap", ctypes.c_size_t), ("module", wintypes.DWORD), ("threads", wintypes.DWORD),
+                    ("ppid", wintypes.DWORD), ("prio", ctypes.c_long), ("flags", wintypes.DWORD),
+                    ("exe", ctypes.c_wchar * 260)]
+
+    class IO(ctypes.Structure):
+        _fields_ = [(n, ctypes.c_ulonglong) for n in ("rops", "wops", "oops", "rbytes", "wbytes", "obytes")]
+
+    k32.CreateToolhelp32Snapshot.restype = wintypes.HANDLE
+    k32.OpenProcess.restype = wintypes.HANDLE
+    snap = k32.CreateToolhelp32Snapshot(0x2, 0)  # TH32CS_SNAPPROCESS
+    if not snap or snap == wintypes.HANDLE(-1).value:
+        return (False, 0, 0)
+    running, rbytes, rops = False, 0, 0
+    try:
+        e = Entry()
+        e.dwSize = ctypes.sizeof(Entry)
+        ok = k32.Process32FirstW(snap, ctypes.byref(e))
+        while ok:
+            if e.exe.lower() == image.lower():
+                running = True
+                h = k32.OpenProcess(0x1000, False, e.pid)  # PROCESS_QUERY_LIMITED_INFORMATION works across elevation
+                if h:
+                    io = IO()
+                    if k32.GetProcessIoCounters(h, ctypes.byref(io)):
+                        rbytes += io.rbytes
+                        rops += io.rops
+                    k32.CloseHandle(h)
+            ok = k32.Process32NextW(snap, ctypes.byref(e))
+    finally:
+        k32.CloseHandle(snap)
+    return (running, rbytes, rops)

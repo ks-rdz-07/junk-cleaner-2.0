@@ -10,4 +10,4 @@ Layers (dependencies point inward only):
     security.py     AV/firewall status, Defender history, Safety Scanner, updates, winget
     ui/             PySide6 front end        -> everything above
 """
-__version__ = "2.0.1"
+__version__ = "2.1.0"
