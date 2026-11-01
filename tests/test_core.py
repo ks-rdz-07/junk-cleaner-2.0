@@ -23,6 +23,15 @@ class Rules(unittest.TestCase):
         self.assertEqual(fmt_size(512), "512 B")
         self.assertEqual(fmt_size(1536), "1.5 KB")
 
+    def test_freed_bytes_counts_quarantine_only_when_deleted(self):
+        from junkcleaner.domain import freed_bytes
+        hist = [{"kind": "Clean", "bytes": 100, "mode": "bin"},
+                {"kind": "Clean", "bytes": 50, "mode": "quarantine"},
+                {"kind": "Scan", "bytes": 999}]
+        q = [{"size": 7, "status": "Deleted"}, {"size": 11, "status": "Quarantined"},
+             {"size": 13, "status": "Restored"}]
+        self.assertEqual(freed_bytes(hist, q), 107)
+
     def test_protected(self):
         self.assertTrue(is_protected(PROTECTED[0]))
         self.assertTrue(is_protected(os.path.join(PROTECTED[0], "sub")))

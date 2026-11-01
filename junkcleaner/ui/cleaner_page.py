@@ -402,9 +402,11 @@ class CleanerPage(QWidget):
         def work():
             return cleaner.clean(sel, mode == 0, lambda d, n: c.ui(self.status.set, d, n, f"Cleaning… {d:,} / {n:,}"),
                                  to_quarantine=mode == 1)
-        c.run_bg(work, lambda r: self._finish_clean(r, how), lambda ex: self._finish_clean(None, how, ex))
+        mode_name = ["bin", "quarantine", "delete"][mode]
+        c.run_bg(work, lambda r: self._finish_clean(r, how, mode_name),
+                 lambda ex: self._finish_clean(None, how, mode_name, ex))
 
-    def _finish_clean(self, result, how, error=None):
+    def _finish_clean(self, result, how, mode, error=None):
         self._set_busy(None)
         if result is None:
             self.model.refilter()
@@ -418,7 +420,7 @@ class CleanerPage(QWidget):
         errors = result.errors
         summary = f"{len(result.done):,} items {how.replace('PERMANENTLY ', 'permanently ')}, {fmt_size(result.freed)}"
         history.log("Clean", summary + (f", {len(errors):,} skipped" if errors else ""), items=len(result.done),
-                    bytes=result.freed, skipped=len(errors))
+                    bytes=result.freed, skipped=len(errors), mode=mode)
         self.activity.emit()
         self.status.done(summary + (f", {len(errors):,} skipped." if errors else "."))
         c.notify("Cleanup complete", summary + (f", {len(errors):,} skipped" if errors else ""))

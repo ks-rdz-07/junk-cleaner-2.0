@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (QComboBox, QFileDialog, QFrame, QGridLayout, QHBo
 from .. import history, quarantine
 from .. import platform_os as osx
 from .. import security as sec
-from ..domain import fmt_size
+from ..domain import fmt_size, freed_bytes
 from . import common as c
 from .theme import C
 
@@ -143,7 +143,7 @@ class DashboardPage(QWidget):
         scan = next((h for h in hist if h["kind"] == "Scan"), None)
         self.t_junk.set(fmt_size(scan.get("bytes", 0)) if scan else "Never",
                         f"{scan.get('items', 0):,} items · {when(scan['time'])}" if scan else "Press Scan for junk")
-        self.t_freed.set(fmt_size(sum(h.get("bytes", 0) for h in hist if h["kind"] == "Clean")),
+        self.t_freed.set(fmt_size(freed_bytes(hist, quarantine.entries())),
                          f"{sum(1 for h in hist if h['kind'] == 'Clean')} cleanup(s)")
         q = [e for e in quarantine.entries() if e["status"] == "Quarantined"]
         self.t_q.set(f"{len(q):,} items", fmt_size(sum(e["size"] for e in q)))
@@ -280,7 +280,7 @@ class HistoryPage(QWidget):
         c.fill(self.table, [((when(h["time"]), h["time"]), h["kind"], h["summary"],
                              (f"{h['items']:,}" if "items" in h else "", h.get("items", -1)),
                              (fmt_size(h["bytes"]) if "bytes" in h else "", h.get("bytes", -1))) for h in rows])
-        freed = sum(h.get("bytes", 0) for h in self.entries if h["kind"] == "Clean")
+        freed = freed_bytes(self.entries, quarantine.entries())
         self.summary.setText(f"{len(rows):,} entries · {fmt_size(freed)} freed in total")
 
     def _export(self):
