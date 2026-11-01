@@ -380,6 +380,7 @@ class CleanerPage(QWidget):
         word = "Failed" if error else ("Stopped" if self.stop.is_set() else "Scan complete")
         self.status.done(f"{word}: {len(items):,} junk items, {fmt_size(size)}. Safe categories are pre-checked - "
                          "review, then press Clean selected." + (f"  ({error})" if error else ""))
+        c.notify(f"Junk scan {word.lower()}", f"{len(items):,} junk items, {fmt_size(size)}. Review them, then clean.")
         history.log("Scan", f"{word}: {len(items):,} items, {fmt_size(size)}", items=len(items), bytes=size,
                     seconds=round(time.time() - started))
         self.activity.emit()
@@ -420,6 +421,7 @@ class CleanerPage(QWidget):
                     bytes=result.freed, skipped=len(errors))
         self.activity.emit()
         self.status.done(summary + (f", {len(errors):,} skipped." if errors else "."))
+        c.notify("Cleanup complete", summary + (f", {len(errors):,} skipped" if errors else ""))
         if errors:
             lines = "\n".join(f"• {p}  ({why})" for p, why in errors[:15])
             extra = f"\n…and {len(errors) - 15:,} more" if len(errors) > 15 else ""

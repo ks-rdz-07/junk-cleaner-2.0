@@ -261,3 +261,18 @@ class Progress(QWidget):
     def _tick(self):
         s = int(time.time() - self._start)
         self.text.setText(f"{self._msg}   ·   {s // 3600:d}:{s // 60 % 60:02d}:{s % 60:02d} elapsed")
+
+
+# ------------------------------------------------------------ notifications
+_notifier = None
+
+
+def set_notifier(fn):
+    global _notifier
+    _notifier = fn
+
+
+def notify(title, text):
+    """Desktop notification when a job finishes (no-op until the main window installs a notifier)."""
+    if _notifier:
+        _notifier(title, text)
