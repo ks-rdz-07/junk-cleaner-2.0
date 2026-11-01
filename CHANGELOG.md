@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog, and this project uses semantic versioning.
 
+## [2.1.0]
+### Added
+- Desktop notifications when a junk scan, cleanup, virus scan, update check or app update finishes (or fails);
+  clicking the notification brings the window back.
+- Virus scan progress: a step checklist (download and verify, administrator approval, scanning, results) and live
+  disk activity of Microsoft Safety Scanner while it runs, instead of an empty screen.
+- Sharp, auto-updating contributors image in the README footer.
+
 ## [2.0.1]
 
 ### Added

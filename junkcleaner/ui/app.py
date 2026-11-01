@@ -5,7 +5,7 @@ import sys
 from PySide6.QtCore import QSize, QTimer, Qt
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import (QApplication, QButtonGroup, QFrame, QHBoxLayout, QLabel, QMainWindow, QStackedWidget,
-                               QVBoxLayout, QWidget)
+                               QSystemTrayIcon, QVBoxLayout, QWidget)
 
 from .. import __version__, history, quarantine
 from .. import platform_os as osx
@@ -55,6 +55,14 @@ class MainWindow(QMainWindow):
 
         for p in (self.cleaner, self.security, self.quarantine):
             p.activity.connect(self._activity)
+        # tray icon = native Windows notifications when a job finishes; clicking one brings the window back
+        self.tray = QSystemTrayIcon(QApplication.windowIcon(), self)
+        self.tray.setToolTip("Junk Cleaner")
+        self.tray.messageClicked.connect(self._bring_to_front)
+        self.tray.activated.connect(lambda reason: self._bring_to_front())
+        if QSystemTrayIcon.isSystemTrayAvailable():
+            self.tray.show()
+        c.set_notifier(self._notify)
         self.dashboard.go.connect(self._quick)
 
     def _sidebar(self, titles):
@@ -93,6 +101,16 @@ class MainWindow(QMainWindow):
         self.theme_btn = c.button("☀  Light theme", self._toggle_theme)
         lay.addWidget(self.theme_btn)
         return side
+
+    def _notify(self, title, text):
+        if self.tray.isVisible():
+            self.tray.showMessage(title, text, QSystemTrayIcon.Information, 10000)
+        QApplication.alert(self)  # flash the taskbar button if the window is in the background
+
+    def _bring_to_front(self):
+        self.showNormal() if self.isMinimized() else self.show()
+        self.raise_()
+        self.activateWindow()
 
     def _show(self, i):
         self.nav.button(i).setChecked(True)
