@@ -5,14 +5,21 @@ import html
 import json
 import os
 import sys
+import urllib.parse
 import urllib.request
 
 AVATAR, GAP_X, GAP_Y, PER_ROW, LABEL = 64, 28, 34, 8, 13
 
 
+def is_github_api(url):
+    """Only send the token to https://api.github.com itself (exact host, not a substring of the URL)."""
+    parts = urllib.parse.urlsplit(url)
+    return parts.scheme == "https" and parts.hostname == "api.github.com"
+
+
 def get(url, raw=False):
     req = urllib.request.Request(url, headers={"User-Agent": "junk-cleaner-contributors"})
-    if os.environ.get("GITHUB_TOKEN") and "api.github.com" in url:
+    if os.environ.get("GITHUB_TOKEN") and is_github_api(url):
         req.add_header("Authorization", f"Bearer {os.environ['GITHUB_TOKEN']}")
     with urllib.request.urlopen(req, timeout=30) as r:  # nosec B310 - fixed https GitHub URLs only
         data = r.read()

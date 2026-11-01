@@ -188,6 +188,11 @@ class ContributorsImage(unittest.TestCase):
         self.assertEqual(out.count("<image"), 10)
         self.assertIn("&lt;x&gt;", out)          # usernames are escaped
         self.assertNotIn("<x>", out)
+        # the token goes only to the real API host
+        self.assertTrue(mod.is_github_api("https://api.github.com/repos/o/r/contributors"))
+        for bad in ("https://evil.example/?api.github.com", "https://api.github.com.evil.example/x",
+                    "http://api.github.com/x", "https://user@evil.example/api.github.com"):
+            self.assertFalse(mod.is_github_api(bad), bad)
 
 
 if __name__ == "__main__":
