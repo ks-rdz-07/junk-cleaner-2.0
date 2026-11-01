@@ -4,6 +4,10 @@
 # Usage: scripts/harden-repo.sh [owner/repo]
 set -u
 REPO="${1:-ks-rdz-07/junk-cleaner-2.0}"
+# Required approvals on main. 0 while there is a single maintainer (GitHub never lets you approve your own PR);
+# set APPROVALS=1 when a second maintainer joins:  APPROVALS=1 scripts/harden-repo.sh
+APPROVALS="${APPROVALS:-0}"
+if [ "$APPROVALS" -gt 0 ]; then CODEOWNER=true; else CODEOWNER=false; fi
 ok() { printf '  \033[32mOK\033[0m   %s\n' "$1"; }
 no() { printf '  \033[33mSKIP\033[0m %s  (%s)\n' "$1" "$2"; }
 try() { local what="$1"; shift; if out=$("$@" 2>&1); then ok "$what"; else no "$what" "$(echo "$out" | tr -d '\n' | grep -o '"message":"[^"]*"' | head -1)"; fi; }
@@ -61,10 +65,10 @@ RULESET=$(cat <<JSON
     {"type": "non_fast_forward"},
     {"type": "required_linear_history"},
     {"type": "pull_request", "parameters": {
-      "required_approving_review_count": 1,
-      "require_code_owner_review": true,
+      "required_approving_review_count": $APPROVALS,
+      "require_code_owner_review": $CODEOWNER,
       "dismiss_stale_reviews_on_push": true,
-      "require_last_push_approval": true,
+      "require_last_push_approval": $CODEOWNER,
       "required_review_thread_resolution": true,
       "allowed_merge_methods": ["squash"]}},
     {"type": "required_status_checks", "parameters": {
