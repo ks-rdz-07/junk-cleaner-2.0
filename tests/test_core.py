@@ -28,9 +28,17 @@ class Rules(unittest.TestCase):
         hist = [{"kind": "Clean", "bytes": 100, "mode": "bin"},
                 {"kind": "Clean", "bytes": 50, "mode": "quarantine"},
                 {"kind": "Scan", "bytes": 999}]
-        q = [{"size": 7, "status": "Deleted"}, {"size": 11, "status": "Quarantined"},
-             {"size": 13, "status": "Restored"}]
+        q = [{"size": 7, "status": "Deleted", "time": 1}, {"size": 11, "status": "Quarantined", "time": 1},
+             {"size": 13, "status": "Restored", "time": 1}]
         self.assertEqual(freed_bytes(hist, q), 107)
+
+    def test_freed_bytes_does_not_double_count_legacy_quarantine(self):
+        from junkcleaner.domain import freed_bytes
+        hist = [{"kind": "Clean", "bytes": 50, "time": 100},
+                {"kind": "Clean", "bytes": 30, "time": 200, "mode": "quarantine"}]
+        q = [{"size": 50, "status": "Deleted", "time": 90},
+             {"size": 30, "status": "Deleted", "time": 190}]
+        self.assertEqual(freed_bytes(hist, q), 80)
 
     def test_protected(self):
         self.assertTrue(is_protected(PROTECTED[0]))

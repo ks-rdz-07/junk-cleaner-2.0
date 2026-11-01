@@ -143,9 +143,10 @@ class DashboardPage(QWidget):
         scan = next((h for h in hist if h["kind"] == "Scan"), None)
         self.t_junk.set(fmt_size(scan.get("bytes", 0)) if scan else "Never",
                         f"{scan.get('items', 0):,} items · {when(scan['time'])}" if scan else "Press Scan for junk")
-        self.t_freed.set(fmt_size(freed_bytes(hist, quarantine.entries())),
+        qe = quarantine.entries()
+        self.t_freed.set(fmt_size(freed_bytes(hist, qe)),
                          f"{sum(1 for h in hist if h['kind'] == 'Clean')} cleanup(s)")
-        q = [e for e in quarantine.entries() if e["status"] == "Quarantined"]
+        q = [e for e in qe if e["status"] == "Quarantined"]
         self.t_q.set(f"{len(q):,} items", fmt_size(sum(e["size"] for e in q)))
         c.fill(self.recent, [((when(h["time"]), h["time"]), h["kind"], h["summary"]) for h in hist[:30]])
         self._fill_sys()
