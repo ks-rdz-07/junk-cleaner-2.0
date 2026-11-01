@@ -1,0 +1,67 @@
+# AI code review on every pull request (Claude). Posts inline comments and a summary.
+# Needs the repository secret ANTHROPIC_API_KEY; skipped when it is missing.
+# Pull requests from forks never receive secrets, so for those a maintainer can run it from
+# the Actions tab (workflow_dispatch) after reading the change.
+name: Bot review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Pull request number to review
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: review-${{ github.event.pull_request.number || inputs.pr }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: ${{ github.event_name == 'workflow_dispatch' || !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+    env:
+      HAS_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+      PR: ${{ github.event.pull_request.number || inputs.pr }}
+    steps:
+      - name: Skip without API key
+        if: env.HAS_KEY != 'true'
+        run: echo "::notice::ANTHROPIC_API_KEY is not set (or this is a fork PR); bot review skipped."
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        if: env.HAS_KEY == 'true'
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: anthropics/claude-code-action@d535f5172dec02b204866b393d6b20b9b2aaf98d # v1
+        if: env.HAS_KEY == 'true'
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ env.PR }}
+
+            Review this pull request for Junk Cleaner, a desktop app that deletes files and runs elevated (UAC).
+            Read CONTRIBUTING.md and SECURITY.md first. Check, in priority order:
+            1. Security: command/PowerShell injection (subprocess, _ps, _q quoting), path traversal, deleting or
+               moving files outside the scanned/confirmed set, symlink/junction following, unsafe downloads,
+               weakening the Safety Scanner signature check, secrets, new network calls, telemetry.
+            2. Data safety: the scanner must stay read-only; every destructive action needs a confirmation that
+               defaults to No; quarantine must never lose data.
+            3. Correctness bugs and missing error handling.
+            4. Tests: new logic needs a unit test in tests/test_core.py.
+            5. No new dependencies beyond the standard library and PySide6.
+            Use inline comments for specific lines (only real problems, no style nits).
+            Finish with one PR comment: a short summary and a verdict line "Verdict: approve" or
+            "Verdict: changes requested" with the blocking reasons.
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"

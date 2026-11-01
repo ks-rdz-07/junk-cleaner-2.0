@@ -1,0 +1,18 @@
+Junk Cleaner
+Copyright 2026 The Junk Cleaner contributors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Third-party software bundled in the Windows installer (JunkCleaner-<version>-x64.msi):
+
+- Qt for Python (PySide6) and Qt, The Qt Company Ltd. and contributors.
+  Licensed under the GNU Lesser General Public License v3 (LGPLv3). Source: https://code.qt.io/
+  The Qt libraries are shipped as separate, replaceable shared libraries.
+- Python runtime, Python Software Foundation. Licensed under the PSF License Agreement.
+  https://docs.python.org/3/license.html
+- PyInstaller bootloader, PyInstaller Development Team. Licensed under the GPL v2 with the
+  PyInstaller bootloader exception, which allows distributing bundled programs under any license.
+  https://pyinstaller.org/en/stable/license.html
+
+Microsoft Safety Scanner, winget and Windows Update are Microsoft components that are not
+bundled; the app downloads or calls them at runtime.

@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/ks-rdz-07/junk-cleaner-2.0/blob/main/SECURITY.md
+    about: Do not open a public issue for a security problem. See SECURITY.md for private reporting.

@@ -1,0 +1,26 @@
+name: Feature request
+description: Suggest an improvement to Junk Cleaner
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+  - type: dropdown
+    id: destructive
+    attributes:
+      label: Does this delete, move or change files or system settings?
+      description: Destructive actions must ask for explicit confirmation, with No as the default.
+      options:
+        - "No"
+        - "Yes"
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered

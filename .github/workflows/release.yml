@@ -1,0 +1,112 @@
+# Release build after every merge to main: build the MSI on Windows, virus-scan it, and publish a
+# GitHub Release when junkcleaner.__version__ has a new version (otherwise keep the build as an artifact).
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["docs/**", "marketing/**", "**/*.md", ".github/ISSUE_TEMPLATE/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Install build tools
+        run: |
+          pip install -r requirements.txt "pyinstaller>=6.10,<7"
+          dotnet tool install -g wix --version 5.0.1
+          wix extension add -g WixToolset.UI.wixext/5.0.1 WixToolset.Util.wixext/5.0.1
+      - id: ver
+        run: echo "version=$(python -c 'import junkcleaner; print(junkcleaner.__version__)')" >> $env:GITHUB_OUTPUT
+      - name: Build MSI (runs the unit tests first)
+        run: ./build.ps1
+      - name: Checksums
+        run: |
+          Get-FileHash out/*.msi -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLower())  $(Split-Path $_.Path -Leaf)" } |
+            Set-Content out/SHA256SUMS.txt -Encoding ascii
+          Get-Content out/SHA256SUMS.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: junk-cleaner-msi
+          path: |
+            out/*.msi
+            out/SHA256SUMS.txt
+          retention-days: 30
+
+  scan:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: junk-cleaner-msi
+          path: dist
+      - name: ClamAV scan of the installer
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq clamav
+          sudo systemctl stop clamav-freshclam || true
+          sudo freshclam --quiet
+          clamscan --infected --scan-archive=yes dist/
+      - name: Verify checksums
+        run: cd dist && sha256sum -c SHA256SUMS.txt
+
+  publish:
+    needs: [build, scan]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: junk-cleaner-msi
+          path: dist
+      - id: tag
+        name: Is this a new version?
+        run: |
+          if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "new=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::v$VERSION is already released; the build is kept as a workflow artifact."
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build provenance attestation
+        # Artifact attestations are free on public repositories.
+        if: ${{ steps.tag.outputs.new == 'true' && !github.event.repository.private }}
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
+        with:
+          subject-path: dist/*.msi
+      - name: Publish GitHub Release
+        if: ${{ steps.tag.outputs.new == 'true' }}
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
+        with:
+          tag_name: v${{ needs.build.outputs.version }}
+          name: Junk Cleaner ${{ needs.build.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
+          files: |
+            dist/*.msi
+            dist/SHA256SUMS.txt

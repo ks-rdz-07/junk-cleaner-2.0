@@ -1,0 +1,55 @@
+name: Bug report
+description: Report a problem with Junk Cleaner
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: "Security problems do not belong here. See SECURITY.md. Redact personal file names and paths before posting."
+  - type: input
+    id: version
+    attributes:
+      label: Junk Cleaner version
+      description: Shown under the title in the sidebar.
+      placeholder: "2.0.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - Linux
+    validations:
+      required: true
+  - type: input
+    id: os-version
+    attributes:
+      label: OS version
+      placeholder: "e.g. Windows 11 or Ubuntu 24.04"
+  - type: dropdown
+    id: how-run
+    attributes:
+      label: How did you run it?
+      options:
+        - MSI installer
+        - From source
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+  - type: textarea
+    id: output
+    attributes:
+      label: Relevant output or screenshots
+      description: Redact personal file names and paths.
