@@ -81,3 +81,13 @@ def fmt_size(n):
         if n < 1024 or unit == "TB":
             return f"{n:.0f} {unit}" if unit == "B" else f"{n:.1f} {unit}"
         n /= 1024
+
+
+def freed_bytes(history, quarantined):
+    """Bytes that really left the disk: cleanups not moved to quarantine, plus quarantined items since deleted or expired.
+    history: Clean entries carry mode bin|quarantine|delete (entries logged before modes existed count as before).
+    Clean entries logged before modes existed are counted in full, so items they quarantined are not counted again."""
+    cleans = [h for h in history if h["kind"] == "Clean"]
+    cleaned = sum(h.get("bytes", 0) for h in cleans if h.get("mode") != "quarantine")
+    legacy_until = max((h.get("time", 0) for h in cleans if "mode" not in h), default=0)
+    return cleaned + sum(e["size"] for e in quarantined if e["status"] == "Deleted" and e["time"] > legacy_until)
